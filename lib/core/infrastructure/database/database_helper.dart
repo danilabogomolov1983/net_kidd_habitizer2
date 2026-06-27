@@ -14,7 +14,7 @@ import '../logging/noop_logger.dart';
 /// while still leveraging SQLite's power.
 final class DatabaseHelper {
   static const _databaseName = 'habitizer.db';
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
 
   final IAppLogger _logger;
   Database? _db;
@@ -43,40 +43,57 @@ final class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     _logger.info('Creating database schema v$version');
     await db.execute('''
-      CREATE TABLE tasks (
+      CREATE TABLE habits (
         id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        status TEXT NOT NULL DEFAULT 'todo',
-        priority TEXT NOT NULL DEFAULT 'medium',
-        due_date TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE tags (
-        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
         name TEXT NOT NULL UNIQUE,
-        color TEXT NOT NULL DEFAULT '#2196F3',
         created_at TEXT NOT NULL
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE task_tags (
-        task_id TEXT NOT NULL,
-        tag_id TEXT NOT NULL,
-        PRIMARY KEY (task_id, tag_id),
-        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
-        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      CREATE TABLE habit_parameters (
+        id TEXT PRIMARY KEY,
+        habit_id TEXT NOT NULL,
+        start_date TEXT,
+        end_date TEXT,
+        value REAL NOT NULL,
+        measure_unit TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE
       )
     ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     _logger.info('Upgrading database', metadata: {'from': oldVersion, 'to': newVersion});
+    if (oldVersion < 2) {
+      // Drop legacy v1 tables (tasks, tags, task_tags).
+      await db.execute('DROP TABLE IF EXISTS task_tags');
+      await db.execute('DROP TABLE IF EXISTS tags');
+      await db.execute('DROP TABLE IF EXISTS tasks');
+      // Create new v2 tables.
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS habits (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL,
+          name TEXT NOT NULL UNIQUE,
+          created_at TEXT NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS habit_parameters (
+          id TEXT PRIMARY KEY,
+          habit_id TEXT NOT NULL,
+          start_date TEXT,
+          end_date TEXT,
+          value REAL NOT NULL,
+          measure_unit TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE
+        )
+      ''');
+    }
   }
 
   /// Run [action] inside a transaction.
