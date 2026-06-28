@@ -63,6 +63,7 @@ final class HabitizerApp extends StatelessWidget {
               borderSide: const BorderSide(color: _primaryBlue, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
             labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
           ),
           filledButtonTheme: FilledButtonThemeData(
