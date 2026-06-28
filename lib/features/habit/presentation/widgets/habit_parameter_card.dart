@@ -4,13 +4,11 @@ import '../../domain/entities/habit_parameter.dart';
 final class HabitParameterCard extends StatelessWidget {
   final HabitParameter param;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
 
   const HabitParameterCard({
     super.key,
     required this.param,
     this.onTap,
-    this.onDelete,
   });
 
   static const _primaryBlue = Color(0xFF0058A3);
@@ -92,15 +90,6 @@ final class HabitParameterCard extends StatelessWidget {
                   Text(daysLeft == 0 ? 'ends' : '${_durationLabel(daysLeft)} left',
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
                           color: daysLeft <= 7 ? const Color(0xFFE8445A) : const Color(0xFF7C5CFC))),
-                ],
-                if (onDelete != null) ...[
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFE8445A)),
-                    onPressed: onDelete, visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    padding: EdgeInsets.zero,
-                  ),
                 ],
               ],
             ),

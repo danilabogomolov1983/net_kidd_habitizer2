@@ -48,7 +48,6 @@ final class HabitParameterListPage extends ConsumerWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => HabitParameterDetailPage(param: p)),
                   ),
-                  onDelete: () => notifier.delete(p.id),
                 );
               },
             ),
