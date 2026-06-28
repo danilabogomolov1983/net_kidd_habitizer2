@@ -60,11 +60,9 @@ final class HabitParameterCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-                // Type label
                 Text(param.type,
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
                 const SizedBox(width: 10),
-                // Description
                 Flexible(
                   child: Text(param.description,
                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
@@ -72,23 +70,18 @@ final class HabitParameterCard extends StatelessWidget {
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
                 const SizedBox(width: 8),
-                // Value + unit
                 Text('$valueText${param.unit}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                        color: _primaryBlue)),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _primaryBlue)),
                 const SizedBox(width: 8),
-                // Dates
                 if (param.startDate != null)
                   _MiniDate(icon: Icons.play_circle_outline,
-                      label: '${param.startDate!.month}/${param.startDate!.day}',
-                      color: _primaryBlue),
+                      label: '${param.startDate!.month}/${param.startDate!.day}', color: _primaryBlue),
                 if (param.startDate != null || param.endDate != null)
                   Text('·', style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
                 if (param.endDate != null)
                   _MiniDate(icon: Icons.flag_circle_outlined,
                       label: '${param.endDate!.month}/${param.endDate!.day}',
                       color: const Color(0xFF7C5CFC)),
-                // Stats
                 if (sinceStart >= 0) ...[
                   const SizedBox(width: 6),
                   Text('${_durationLabel(sinceStart)} ago',
@@ -103,7 +96,7 @@ final class HabitParameterCard extends StatelessWidget {
                 if (onDelete != null) ...[
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFFB0B0C0)),
+                    icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFE8445A)),
                     onPressed: onDelete, visualDensity: VisualDensity.compact,
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     padding: EdgeInsets.zero,

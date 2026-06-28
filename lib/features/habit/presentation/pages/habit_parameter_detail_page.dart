@@ -91,30 +91,33 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
       setState(() {
         if (isStart) { _startDate = picked; } else { _endDate = picked; }
       });
+      _save();
     }
   }
 
   Future<void> _save() async {
     final desc = _descCtrl.text.trim();
-    final v = double.tryParse(_valueCtrl.text.trim());
-    final u = _unitCtrl.text.trim();
-    if (desc.isEmpty || _type.isEmpty || v == null || u.isEmpty) return;
+    if (desc.isEmpty) return;
+    var t = _type.isEmpty ? 'health' : _type;
+    var v = double.tryParse(_valueCtrl.text.trim()) ?? 0;
+    var u = _unitCtrl.text.trim().isEmpty ? 'times' : _unitCtrl.text.trim();
     final notifier = ref.read(habitParameterNotifierProvider.notifier);
     if (_saved != null) {
       final updated = _saved!.copyWith(
-        description: desc, type: _type, startDate: _startDate,
+        description: desc, type: t, startDate: _startDate,
         endDate: _endDate, value: v, unit: u,
       );
       await notifier.update(updated);
       setState(() => _saved = updated);
     } else {
+      if (_type.isEmpty) setState(() => _type = t);
       final id = const Uuid().v4();
       await notifier.create(
-        id: id, type: _type, description: desc,
+        id: id, type: t, description: desc,
         startDate: _startDate, endDate: _endDate, value: v, unit: u,
       );
       setState(() => _saved = HabitParameter(
-        id: id, type: _type, description: desc,
+        id: id, type: t, description: desc,
         startDate: _startDate, endDate: _endDate, value: v, unit: u,
         createdAt: DateTime.now(),
       ));
@@ -124,24 +127,8 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
   void _delete() {
     final p = _saved ?? widget.param;
     if (p == null) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete'),
-        content: Text('Remove "${p.description}"?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              ref.read(habitParameterNotifierProvider.notifier).delete(p.id);
-              Navigator.pop(ctx); Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE8445A)),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+    ref.read(habitParameterNotifierProvider.notifier).delete(p.id);
+    Navigator.pop(context);
   }
 
   @override
@@ -221,7 +208,7 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
                     // Clear dates
                     if (_startDate != null || _endDate != null)
                       GestureDetector(
-                        onTap: () { setState(() => _startDate = _endDate = null); if (!_isNew) _save(); },
+                        onTap: () { setState(() => _startDate = _endDate = null); _save(); },
                         child: const Padding(
                           padding: EdgeInsets.all(4),
                           child: Icon(Icons.close, size: 13, color: Color(0xFFB0B0C0)),
@@ -258,7 +245,7 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
                       color: selected ? Colors.white : tc)),
                   onPressed: () {
                     setState(() => _type = t);
-                    if (!_isNew) _save();
+                    _save();
                   },
                   backgroundColor: selected ? tc : Colors.white,
                   side: BorderSide(color: tc.withAlpha(selected ? 0 : 80)),
