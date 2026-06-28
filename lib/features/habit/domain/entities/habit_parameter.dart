@@ -1,78 +1,86 @@
 import 'package:equatable/equatable.dart';
 import '../../../../core/domain/base_types.dart';
 
-/// A measurable parameter associated with a [Habit].
+/// A habit parameter the user tracks.
 ///
-/// Each parameter tracks a numeric [value] with a [measureUnit]
-/// (e.g. "minutes", "kg", "reps"). [startDate] and [endDate] are optional
-/// and define the tracking window.
+/// Fields: [type] (health, food, fitness, sleep), [description],
+/// optional [startDate]/[endDate], [value] and [unit].
 final class HabitParameter extends Equatable implements IEntity {
   @override
   final String id;
-  final String habitId;
+  final String type;
+  final String description;
   final DateTime? startDate;
   final DateTime? endDate;
   final double value;
-  final String measureUnit;
+  final String unit;
   final DateTime createdAt;
 
   const HabitParameter({
     required this.id,
-    required this.habitId,
+    required this.type,
+    required this.description,
     this.startDate,
     this.endDate,
     required this.value,
-    required this.measureUnit,
+    required this.unit,
     required this.createdAt,
   });
 
   factory HabitParameter.create({
     required String id,
-    required String habitId,
+    required String type,
+    required String description,
     DateTime? startDate,
     DateTime? endDate,
     required double value,
-    required String measureUnit,
+    required String unit,
   }) {
     return HabitParameter(
       id: id,
-      habitId: habitId,
+      type: type,
+      description: description,
       startDate: startDate,
       endDate: endDate,
       value: value,
-      measureUnit: measureUnit,
+      unit: unit,
       createdAt: DateTime.now(),
     );
   }
 
   HabitParameter copyWith({
     String? id,
-    String? habitId,
-    DateTime? startDate,
-    DateTime? endDate,
+    String? type,
+    String? description,
+    Object? startDate = _sentinel,
+    Object? endDate = _sentinel,
     double? value,
-    String? measureUnit,
+    String? unit,
     DateTime? createdAt,
   }) {
     return HabitParameter(
       id: id ?? this.id,
-      habitId: habitId ?? this.habitId,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
+      type: type ?? this.type,
+      description: description ?? this.description,
+      startDate: startDate == _sentinel ? this.startDate : startDate as DateTime?,
+      endDate: endDate == _sentinel ? this.endDate : endDate as DateTime?,
       value: value ?? this.value,
-      measureUnit: measureUnit ?? this.measureUnit,
+      unit: unit ?? this.unit,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
+  static const _sentinel = Object();
+
   @override
   List<Object?> get props => [
         id,
-        habitId,
+        type,
+        description,
         startDate,
         endDate,
         value,
-        measureUnit,
+        unit,
         createdAt,
       ];
 }

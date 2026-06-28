@@ -46,21 +46,12 @@ final class DatabaseHelper {
       CREATE TABLE habits (
         id TEXT PRIMARY KEY,
         type TEXT NOT NULL,
-        name TEXT NOT NULL UNIQUE,
-        created_at TEXT NOT NULL
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE habit_parameters (
-        id TEXT PRIMARY KEY,
-        habit_id TEXT NOT NULL,
+        description TEXT NOT NULL,
         start_date TEXT,
         end_date TEXT,
         value REAL NOT NULL,
-        measure_unit TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE
+        unit TEXT NOT NULL,
+        created_at TEXT NOT NULL
       )
     ''');
   }
