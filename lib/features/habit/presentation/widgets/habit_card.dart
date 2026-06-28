@@ -51,20 +51,12 @@ final class HabitCard extends ConsumerWidget {
     }
   }
 
-  /// Latest parameter (sorted by created_at desc — data source already does this).
   HabitParameter? get _latest =>
       parameters.isNotEmpty ? parameters.first : null;
 
-  int? _daysFromStart() {
-    final p = _latest;
-    if (p?.startDate == null) return null;
-    return DateTime.now().difference(p!.startDate!).inDays;
-  }
-
-  int? _daysTillEnd() {
-    final p = _latest;
-    if (p?.endDate == null) return null;
-    return p!.endDate!.difference(DateTime.now()).inDays;
+  int? _day(DateTime? d) {
+    if (d == null) return null;
+    return d.difference(DateTime.now()).inDays;
   }
 
   double? _progress() {
@@ -82,8 +74,7 @@ final class HabitCard extends ConsumerWidget {
     final cs = theme.colorScheme;
     final typeColor = _typeColor(habit.type, cs);
     final latest = _latest;
-    final daysFrom = _daysFromStart();
-    final daysTill = _daysTillEnd();
+    final days = latest != null ? _day(latest.endDate) : null;
     final progress = _progress();
 
     final valueText = latest != null
@@ -93,226 +84,156 @@ final class HabitCard extends ConsumerWidget {
         : null;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Top row: icon, name, type pill, actions ────────────────
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: typeColor.withAlpha(25),
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: Icon(_typeIcon(habit.type),
-                        color: typeColor, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          habit.name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: typeColor.withAlpha(20),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            habit.type,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: typeColor,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (onDelete != null)
-                    IconButton(
-                      icon: Icon(Icons.delete_outline,
-                          color: cs.error.withAlpha(180), size: 20),
-                      onPressed: onDelete,
-                      tooltip: 'Delete habit',
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  Icon(Icons.chevron_right,
-                      color: cs.onSurface.withAlpha(80)),
-                ],
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+              // Icon
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: typeColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child:
+                    Icon(_typeIcon(habit.type), color: typeColor, size: 18),
               ),
+              const SizedBox(width: 8),
 
-              // ── Bottom section: parameter summary ─────────────────────
-              if (latest != null) ...[
-                const SizedBox(height: 12),
-                Divider(height: 1, color: cs.outlineVariant.withAlpha(80)),
-                const SizedBox(height: 10),
-                Row(
+              // Name + type
+              Flexible(
+                flex: 2,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Value + unit badge
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: cs.primaryContainer.withAlpha(100),
-                          borderRadius: BorderRadius.circular(10),
+                    Text(
+                      habit.name,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      habit.type,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: typeColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                      ),
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Parameter info
+              if (latest != null) ...[
+                Flexible(
+                  flex: 3,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Value + unit
+                      Flexible(
+                        child: Text(
+                          '$valueText ${latest.measureUnit}',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: cs.primary,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Day counter
+                      Flexible(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Flexible(
-                              child: Text(
-                                valueText!,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: cs.onPrimaryContainer,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
+                            Icon(Icons.flag_rounded,
+                                size: 12,
+                                color: days != null && days <= 7
+                                    ? cs.error
+                                    : cs.onSurface.withAlpha(120)),
+                            const SizedBox(width: 2),
                             Text(
-                              latest.measureUnit,
+                              days == null
+                                  ? 'n.a.'
+                                  : days == 0
+                                      ? 'ends'
+                                      : '${days}d',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: cs.onPrimaryContainer.withAlpha(180),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                                color: days != null && days <= 7
+                                    ? cs.error
+                                    : cs.onSurface.withAlpha(160),
                               ),
+                              maxLines: 1,
                             ),
                           ],
                         ),
                       ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Day counters
-                    Flexible(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.play_arrow_rounded,
-                              size: 15,
-                              color: daysFrom != null
-                                  ? cs.primary.withAlpha(180)
-                                  : cs.onSurface.withAlpha(80)),
-                          const SizedBox(width: 3),
-                          Flexible(
-                            child: Text(
-                              daysFrom == null
-                                  ? 'n.a.'
-                                  : daysFrom == 0
-                                      ? 'today'
-                                      : daysFrom == 1
-                                          ? '1 day'
-                                          : '$daysFrom d',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: daysFrom != null
-                                    ? cs.primary
-                                    : cs.onSurface.withAlpha(100),
-                                fontWeight: FontWeight.w600,
+                      const SizedBox(width: 6),
+                      // Progress bar
+                      if (progress != null)
+                        Flexible(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 3,
+                              backgroundColor: cs.surfaceContainerHighest,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                progress < 0.7 ? cs.primary : cs.error,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('·',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                              color: cs.onSurface.withAlpha(60))),
-                    ),
-                    Flexible(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.flag_rounded,
-                              size: 15,
-                              color: daysTill != null
-                                  ? (daysTill <= 7
-                                      ? cs.error.withAlpha(200)
-                                      : cs.tertiary.withAlpha(180))
-                                  : cs.onSurface.withAlpha(80)),
-                          const SizedBox(width: 3),
-                          Flexible(
-                            child: Text(
-                              daysTill == null
-                                  ? 'n.a.'
-                                  : daysTill == 0
-                                      ? 'ends today'
-                                      : daysTill == 1
-                                          ? '1 day left'
-                                          : '$daysTill d left',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: daysTill != null
-                                    ? (daysTill <= 7 ? cs.error : cs.tertiary)
-                                    : cs.onSurface.withAlpha(100),
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                        )
+                      else
+                        Flexible(
+                          child: Text(
+                            '${parameters.length}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: cs.onSurface.withAlpha(100),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    // Parameter count badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHighest.withAlpha(120),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${parameters.length}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: cs.onSurface.withAlpha(160),
-                          fontWeight: FontWeight.w600,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Progress bar (if date range)
-                if (progress != null) ...[
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 4,
-                      backgroundColor: cs.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        progress < 0.7 ? cs.primary : cs.error,
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ],
+
+              const Spacer(),
+
+              // Delete button
+              if (onDelete != null)
+                IconButton(
+                  icon: Icon(Icons.delete_outline,
+                      size: 18, color: cs.error.withAlpha(140)),
+                  onPressed: onDelete,
+                  tooltip: 'Delete',
+                  visualDensity: VisualDensity.compact,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                  padding: EdgeInsets.zero,
+                ),
             ],
           ),
         ),
