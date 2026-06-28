@@ -6,7 +6,20 @@ import '../state/habit_parameter_notifier.dart';
 
 final class HabitParameterDetailPage extends ConsumerStatefulWidget {
   final HabitParameter? param;
-  const HabitParameterDetailPage({super.key, this.param});
+  final String? presetDescription;
+  final String? presetType;
+  final double? presetValue;
+  final String? presetUnit;
+
+  const HabitParameterDetailPage({
+    super.key,
+    this.param,
+    this.presetDescription,
+    this.presetType,
+    this.presetValue,
+    this.presetUnit,
+  });
+
   bool get isNew => param == null;
   @override
   ConsumerState<HabitParameterDetailPage> createState() => _DetailState();
@@ -22,19 +35,29 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
   HabitParameter? _saved;
 
   static const _primaryBlue = Color(0xFF0058A3);
-  static const _types = ['health', 'food', 'fitness', 'sleep'];
+  static const _types = [
+    'health',
+    'fitness',
+    'strength',
+    'cardio',
+    'nutrition',
+    'hydration',
+    'sleep',
+    'mindfulness',
+    'recovery',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _descCtrl.text = widget.param?.description ?? '';
+    _descCtrl.text = widget.param?.description ?? widget.presetDescription ?? '';
     _valueCtrl.text = widget.param != null
         ? (widget.param!.value == widget.param!.value.truncateToDouble()
             ? widget.param!.value.toInt().toString()
             : widget.param!.value.toString())
-        : '';
-    _unitCtrl.text = widget.param?.unit ?? '';
-    _type = widget.param?.type ?? '';
+        : (widget.presetValue != null ? widget.presetValue.toString() : '');
+    _unitCtrl.text = widget.param?.unit ?? widget.presetUnit ?? '';
+    _type = widget.param?.type ?? widget.presetType ?? '';
     _startDate = widget.param?.startDate;
     _endDate = widget.param?.endDate;
     _saved = widget.param;
@@ -62,17 +85,27 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
 
   Color _typeColor(String t) => switch (t) {
         'health' => const Color(0xFFE8445A),
-        'food' => const Color(0xFFFF8C42),
+        'nutrition' => const Color(0xFFFF8C42),
         'fitness' => _primaryBlue,
+        'strength' => _primaryBlue,
+        'cardio' => _primaryBlue,
+        'hydration' => const Color(0xFF00A8D6),
         'sleep' => const Color(0xFF7C5CFC),
+        'mindfulness' => const Color(0xFF5E9B7C),
+        'recovery' => const Color(0xFF7C5CFC),
         _ => _primaryBlue,
       };
 
   IconData _typeIcon(String t) => switch (t) {
         'health' => Icons.favorite,
-        'food' => Icons.restaurant,
+        'nutrition' => Icons.restaurant,
         'fitness' => Icons.fitness_center,
+        'strength' => Icons.fitness_center,
+        'cardio' => Icons.directions_run,
+        'hydration' => Icons.water_drop,
         'sleep' => Icons.bedtime,
+        'mindfulness' => Icons.self_improvement,
+        'recovery' => Icons.healing,
         _ => Icons.check_circle_outline,
       };
 
