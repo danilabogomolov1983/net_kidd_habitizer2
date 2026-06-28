@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'features/habit/presentation/pages/habit_parameter_list_page.dart';
+import 'features/habit/presentation/pages/main_shell.dart';
 
 final class HabitizerApp extends StatelessWidget {
   const HabitizerApp({super.key});
@@ -83,7 +83,7 @@ final class HabitizerApp extends StatelessWidget {
             labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ),
-        home: const HabitParameterListPage(),
+        home: const MainShell(),
       ),
     );
   }
