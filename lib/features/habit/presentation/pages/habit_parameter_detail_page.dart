@@ -228,10 +228,10 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
             const SizedBox(height: 8),
             Card(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(12)),
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                 child: TextFormField(
                   controller: _descCtrl,
                   maxLength: 30,
@@ -239,41 +239,44 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
                     hintText: 'e.g. Morning run',
                     border: InputBorder.none,
                     counterText: '',
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
                   ),
                   textCapitalization: TextCapitalization.words,
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w500),
+                      fontSize: 15, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
-            // ── Value + Unit (side by side, prominent) ──
+            // ── Value + Unit (side by side) ──
             _SectionLabel(text: 'Target'),
             const SizedBox(height: 8),
             Row(
               children: [
                 // Value
                 Expanded(
-                  flex: 3,
                   child: Card(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
+                          horizontal: 12, vertical: 2),
                       child: TextFormField(
                         controller: _valueCtrl,
                         decoration: const InputDecoration(
                           hintText: '0',
                           border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
                           color: _primaryBlue,
                         ),
                         textAlign: TextAlign.center,
@@ -281,25 +284,26 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 // Unit
                 Expanded(
-                  flex: 2,
                   child: Card(
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
+                          horizontal: 12, vertical: 2),
                       child: TextFormField(
                         controller: _unitCtrl,
                         decoration: const InputDecoration(
                           hintText: 'km',
                           border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
                         ),
                         style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -309,7 +313,7 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
             // ── Dates ──────────────────────────────────
             _SectionLabel(text: 'Duration'),
@@ -318,37 +322,19 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
               children: [
                 Expanded(
                   child: _DateCard(
-                    label: 'Start',
                     date: _startDate,
                     icon: Icons.play_circle_outline,
                     color: _primaryBlue,
                     onTap: () => _pickDate(true),
-                    onClear: _startDate != null
-                        ? () {
-                            setState(() => _startDate = null);
-                            _save();
-                          }
-                        : null,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child:
-                      Icon(Icons.arrow_forward, size: 16, color: Colors.grey.shade400),
-                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _DateCard(
-                    label: 'End',
                     date: _endDate,
                     icon: Icons.flag_circle_outlined,
                     color: const Color(0xFF7C5CFC),
                     onTap: () => _pickDate(false),
-                    onClear: _endDate != null
-                        ? () {
-                            setState(() => _endDate = null);
-                            _save();
-                          }
-                        : null,
                   ),
                 ),
               ],
@@ -365,14 +351,14 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
               ),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
 
             // ── Type chips ─────────────────────────────
             _SectionLabel(text: 'Category'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 5,
+              runSpacing: 5,
               children: _types.map((t) {
                 final selected = _type == t;
                 final tc = _typeColor(t);
@@ -381,11 +367,11 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
                   label: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(ic, size: 16, color: selected ? Colors.white : tc),
-                      const SizedBox(width: 6),
+                      Icon(ic, size: 14, color: selected ? Colors.white : tc),
+                      const SizedBox(width: 4),
                       Text(t,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: selected ? Colors.white : tc,
                           )),
@@ -401,14 +387,16 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
                   side: BorderSide(
                       color: tc.withAlpha(selected ? 0 : 60)),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(8)),
                   labelPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
                 );
               }).toList(),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -431,7 +419,7 @@ class _SectionLabel extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Colors.grey.shade600,
             letterSpacing: 0.3,
@@ -442,71 +430,46 @@ class _SectionLabel extends StatelessWidget {
 
 // ── Date card ───────────────────────────────────────────────
 class _DateCard extends StatelessWidget {
-  final String label;
   final DateTime? date;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final VoidCallback? onClear;
-
   const _DateCard({
-    required this.label,
     required this.date,
     required this.icon,
     required this.color,
     required this.onTap,
-    this.onClear,
   });
 
   @override
   Widget build(BuildContext context) {
     final hasDate = date != null;
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Column(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade600)),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon,
-                      size: 18,
-                      color: hasDate ? color : Colors.grey.shade400),
-                  const SizedBox(width: 6),
-                  Text(
-                    hasDate ? '${date!.month}/${date!.day}' : '—',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: hasDate
-                          ? const Color(0xFF1A1A2E)
-                          : Colors.grey.shade400,
-                    ),
-                  ),
-                ],
-              ),
-              if (onClear != null)
-                GestureDetector(
-                  onTap: onClear,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text('Clear',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600)),
-                  ),
+              Icon(icon,
+                  size: 15,
+                  color: hasDate ? color : Colors.grey.shade400),
+              const SizedBox(width: 4),
+              Text(
+                hasDate
+                    ? '${date!.day.toString().padLeft(2, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.year}'
+                    : '—',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: hasDate
+                      ? const Color(0xFF1A1A2E)
+                      : Colors.grey.shade400,
                 ),
+              ),
             ],
           ),
         ),
