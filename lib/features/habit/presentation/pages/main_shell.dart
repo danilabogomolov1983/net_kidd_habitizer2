@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/habit_parameter_notifier.dart';
+import '../widgets/app_logo.dart';
 import '../widgets/habit_parameter_card.dart';
 import 'habit_parameter_detail_page.dart';
 import 'statistics_page.dart';
@@ -185,6 +186,11 @@ final class _HomeTab extends ConsumerWidget {
               ]),
             ),
             data: (list) {
+              // ── No habits at all → logo-only empty state ──
+              if (list.isEmpty) {
+                return Center(child: AppLogo(size: 200, opacity: 0.07));
+              }
+
               // Filter by search query
               final filtered = query.isEmpty
                   ? list
@@ -195,18 +201,6 @@ final class _HomeTab extends ConsumerWidget {
                       .toList();
 
               if (filtered.isEmpty) {
-                // Distinguish between "no habits at all" and "no search results"
-                if (list.isEmpty) {
-                  return _EmptyState(
-                    icon: Icons.self_improvement,
-                    title: 'Start your journey',
-                    subtitle:
-                        'Tap + to add your first habit.\nWater, workouts, sleep — track what matters.',
-                    onAction: () {
-                      // The FAB handles this; we just show the message
-                    },
-                  );
-                }
                 return _EmptyState(
                   icon: Icons.search_off,
                   title: 'No matches',
@@ -246,13 +240,11 @@ class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback? onAction;
 
   const _EmptyState({
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.onAction,
   });
 
   @override
@@ -270,8 +262,8 @@ class _EmptyState extends StatelessWidget {
                 color: const Color(0xFF0058A3).withAlpha(18),
                 shape: BoxShape.circle,
               ),
-              child:
-                  Icon(icon, size: 40, color: const Color(0xFF0058A3).withAlpha(120)),
+              child: Icon(icon,
+                  size: 40, color: const Color(0xFF0058A3).withAlpha(120)),
             ),
             const SizedBox(height: 20),
             Text(title,
@@ -283,18 +275,8 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(subtitle,
                 style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    height: 1.5),
+                    fontSize: 14, color: Colors.grey.shade600, height: 1.5),
                 textAlign: TextAlign.center),
-            if (onAction != null) ...[
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: onAction,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add habit'),
-              ),
-            ],
           ],
         ),
       ),
