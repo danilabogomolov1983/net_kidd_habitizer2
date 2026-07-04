@@ -13,6 +13,14 @@ final class HabitizerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
       child: MaterialApp(
+        builder: (context, child) {
+          final width = MediaQuery.of(context).size.width;
+          final scaler = TextScaler.linear((width / 375).clamp(0.85, 1.4));
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: scaler),
+            child: child!,
+          );
+        },
         title: 'Habitizer',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
