@@ -33,6 +33,8 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
   DateTime? _startDate;
   DateTime? _endDate;
   HabitParameter? _saved;
+  bool _isSaving = false;
+  bool _dirty = false;
 
   static const _primaryBlue = Color(0xFF0058A3);
   static const _types = [
@@ -69,6 +71,7 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
 
   void _onChanged() {
     if (!_ready) return;
+    _dirty = true;
     _save();
   }
 
@@ -146,50 +149,62 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
           _endDate = picked;
         }
       });
+      _dirty = true;
       _save();
     }
   }
 
   Future<void> _save() async {
+    if (_isSaving) return;
     final desc = _descCtrl.text.trim();
     if (desc.isEmpty) return;
     var t = _type.isEmpty ? 'health' : _type;
     var v = double.tryParse(_valueCtrl.text.trim()) ?? 0;
     var u = _unitCtrl.text.trim().isEmpty ? 'times' : _unitCtrl.text.trim();
-    final notifier = ref.read(habitParameterNotifierProvider.notifier);
-    if (_saved != null) {
-      final updated = _saved!.copyWith(
-        description: desc,
-        type: t,
-        startDate: _startDate,
-        endDate: _endDate,
-        value: v,
-        unit: u,
-      );
-      await notifier.update(updated);
-      setState(() => _saved = updated);
-    } else {
-      if (_type.isEmpty) setState(() => _type = t);
-      final id = const Uuid().v4();
-      await notifier.create(
-        id: id,
-        type: t,
-        description: desc,
-        startDate: _startDate,
-        endDate: _endDate,
-        value: v,
-        unit: u,
-      );
-      setState(() => _saved = HabitParameter(
-            id: id,
-            type: t,
-            description: desc,
-            startDate: _startDate,
-            endDate: _endDate,
-            value: v,
-            unit: u,
-            createdAt: DateTime.now(),
-          ));
+
+    _isSaving = true;
+    _dirty = false;
+    try {
+      final notifier = ref.read(habitParameterNotifierProvider.notifier);
+      if (_saved != null) {
+        final updated = _saved!.copyWith(
+          description: desc,
+          type: t,
+          startDate: _startDate,
+          endDate: _endDate,
+          value: v,
+          unit: u,
+        );
+        await notifier.update(updated);
+        setState(() => _saved = updated);
+      } else {
+        if (_type.isEmpty) setState(() => _type = t);
+        final id = const Uuid().v4();
+        await notifier.create(
+          id: id,
+          type: t,
+          description: desc,
+          startDate: _startDate,
+          endDate: _endDate,
+          value: v,
+          unit: u,
+        );
+        setState(() => _saved = HabitParameter(
+              id: id,
+              type: t,
+              description: desc,
+              startDate: _startDate,
+              endDate: _endDate,
+              value: v,
+              unit: u,
+              createdAt: DateTime.now(),
+            ));
+      }
+    } finally {
+      _isSaving = false;
+      if (_dirty) {
+        _save();
+      }
     }
   }
 
@@ -380,6 +395,7 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
                   selected: selected,
                   onSelected: (_) {
                     setState(() => _type = t);
+                    _dirty = true;
                     _save();
                   },
                   selectedColor: tc,
