@@ -117,17 +117,6 @@ final class HabitParameterCard extends StatelessWidget {
         ? param.value.toInt().toString()
         : param.value.toString();
     final isUrgent = daysLeft >= 0 && daysLeft <= 3;
-    final typeLabel = _typeLabel(param.type);
-
-    // Subtitle:  "health  ·  started 2w ago  ·  5d left"
-    final subtitlePieces = <String>[typeLabel];
-    if (sinceStart >= 0) {
-      subtitlePieces.add('started ${_durationLabel(sinceStart)} ago');
-    }
-    if (daysLeft >= 0) {
-      subtitlePieces.add(
-          daysLeft == 0 ? 'ends today' : '${_durationLabel(daysLeft)} left');
-    }
 
     final card = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
@@ -162,38 +151,45 @@ final class HabitParameterCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 14),
 
-                  // Title + subtitle
+                  // Title
                   Expanded(
-                    child: Column(
+                    child: Text(
+                      param.description,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A2E),
+                        height: 1.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  // Date-based values (stacked, icons aligned)
+                  if (sinceStart >= 0 || daysLeft >= 0) ...[
+                    const SizedBox(width: 6),
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          param.description,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1A1A2E),
-                            height: 1.3,
+                        if (sinceStart >= 0)
+                          _DateLine(
+                            icon: Icons.play_arrow,
+                            label: '${_durationLabel(sinceStart)}',
+                            color: Colors.grey.shade500,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitlePieces.join('  ·  '),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
-                            height: 1.3,
+                        if (daysLeft >= 0)
+                          _DateLine(
+                            icon: Icons.flag,
+                            label: daysLeft == 0 ? 'today' : '${_durationLabel(daysLeft)}',
+                            color: daysLeft <= 7
+                                ? const Color(0xFFE8445A)
+                                : Colors.grey.shade500,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
                       ],
                     ),
-                  ),
+                  ],
                   const SizedBox(width: 8),
 
                   // Trailing value
@@ -273,4 +269,37 @@ final class HabitParameterCard extends StatelessWidget {
     }
     return card;
   }
+}
+
+class _DateLine extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _DateLine({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            child: Icon(icon, size: 10, color: color),
+          ),
+          const SizedBox(width: 1),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: color,
+              height: 1.2,
+            ),
+          ),
+        ],
+      );
 }
