@@ -1,7 +1,7 @@
 name: net_kidd_habitizer2
 description: "Habitizer 2.0 — Modular Monolith with Clean Architecture and Vertical Slices"
 publish_to: 'none'
-version: 1.0.4+3
+version: 1.0.5+5
 
 environment:
   sdk: ^3.12.2
