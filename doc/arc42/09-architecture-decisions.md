@@ -109,3 +109,54 @@ persistence behaviour through integration tests.
 - (+) Less test code to maintain
 - (+) Integration tests catch real SQLite behaviour
 - (-) Integration tests are slower than pure unit tests
+
+---
+
+## ADR-007: Slice-per-screen presentation layer + slice DI composition
+
+**Status**: Accepted  
+**Date**: 2026-07-05
+
+**Context**: The presentation layer mixed app-level screens (main shell,
+profile, statistics) and shared branding into the `habit` feature, and the
+application service imported the infrastructure repository impl for Riverpod
+wiring — violating the dependency rule.
+
+**Decision**:
+1. Restructure presentation into one vertical slice per screen area:
+   `habit` (list/detail + state), `shell` (navigation composition root),
+   `statistics` and `profile` (read-only projections over habit state).
+2. Move brand/widgets shared across slices into `shared/widgets/`.
+3. Extract all Riverpod provider wiring into per-slice composition roots
+   (`features/habit/infrastructure/di/`); application and infrastructure
+   classes stay framework-free.
+4. Sibling slices access habit state only through the slice's public barrel
+   (`features/habit/habit.dart`); only the shell imports sibling pages directly.
+5. Document every folder with in-tree `CLAUDE.md` files.
+
+**Consequences**:
+- (+) Dependency rule enforced: application no longer imports infrastructure.
+- (+) Screens can evolve independently; statistics/profile can later grow
+  their own state/persistence without touching habit.
+- (+) AI coding agents get precise per-folder context via `CLAUDE.md`.
+- (-) More slice folders than before; mitigated by barrels and thin slices.
+
+---
+
+## ADR-008: Stay on Flutter — no platform migration
+
+**Status**: Accepted  
+**Date**: 2026-09-17
+
+**Context**: A migration to .NET MAUI was considered. The app is a local,
+offline-first habit tracker already shipped on Flutter; a rewrite would add
+risk without new capability. Future effort is better spent on the Flutter
+codebase (features, tests, release automation).
+
+**Decision**: No migration. All further development continues on Flutter.
+Migration planning documents were removed; this ADR supersedes them.
+
+**Consequences**:
+- (+) No rewrite risk; existing release artifacts, tests and CI stay valid
+- (+) Full focus on feature development
+- (-) The app remains single-platform-stack (Flutter only)

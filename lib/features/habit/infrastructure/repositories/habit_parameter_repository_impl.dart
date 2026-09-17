@@ -1,6 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/result.dart';
-import '../../../../core/infrastructure/database/database_module.dart';
 import '../../domain/entities/habit_parameter.dart';
 import '../../domain/repositories/habit_parameter_repository.dart';
 import '../../domain/failures.dart';
@@ -56,9 +54,3 @@ final class HabitParameterRepositoryImpl implements IHabitParameterRepository {
     }
   }
 }
-
-final habitParameterRepositoryProvider = Provider<IHabitParameterRepository>((ref) {
-  final dbHelper = ref.read(databaseHelperProvider);
-  final ds = HabitParameterLocalDataSource(dbHelper);
-  return HabitParameterRepositoryImpl(ds);
-});

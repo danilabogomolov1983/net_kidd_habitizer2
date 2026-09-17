@@ -9,12 +9,19 @@ final class FakeRepo implements IHabitParameterRepository {
   final List<HabitParameter> _items = [];
   @override Future<Result<List<HabitParameter>>> getAll() async => Result.success(List.unmodifiable(_items));
   @override Future<Result<HabitParameter>> getById(String id) async {
-    try { return Result.success(_items.firstWhere((p) => p.id == id)); }
-    catch (_) { return Result.failure(HabitNotFoundFailure(id)); }
+    try {
+      return Result.success(_items.firstWhere((p) => p.id == id));
+    } catch (_) {
+      return Result.failure(HabitNotFoundFailure(id));
+    }
   }
   @override Future<Result<HabitParameter>> save(HabitParameter p) async {
     final idx = _items.indexWhere((x) => x.id == p.id);
-    if (idx >= 0) _items[idx] = p; else _items.add(p);
+    if (idx >= 0) {
+      _items[idx] = p;
+    } else {
+      _items.add(p);
+    }
     return Result.success(p);
   }
   @override Future<Result<void>> delete(String id) async {

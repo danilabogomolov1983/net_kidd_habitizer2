@@ -41,16 +41,16 @@ Presentation  ──►  Application  ──►  Domain  ◄──  Infrastructu
 Each feature is a self-contained module:
 
 ```
-features/task/
+features/habit/
   domain/          ← entities, repository interface, failures
   application/     ← service, DTOs, pure mapping functions
-  infrastructure/  ← data source, repository impl, Riverpod providers
-  presentation/    ← pages, widgets, state notifier
+  infrastructure/  ← data source, repository impl, di/ (Riverpod providers)
+  presentation/    ← pages, widgets, state notifiers
 ```
 
 **Why both?** Clean Architecture keeps the core testable and framework-independent.
-Vertical slices keep features decoupled — you can modify the `tag` slice without
-touching the `task` slice.
+Vertical slices keep features decoupled — you can modify the `statistics` slice
+without touching the `habit` slice.
 
 ### 🧪 Functional Programming
 
@@ -66,18 +66,19 @@ touching the `task` slice.
 
 ## Features
 
-| Feature | Description | Domain model |
+| Slice | Description | Domain model |
 |---------|-------------|-------------|
-| **Tasks** | Create, update, complete, and delete tasks with priorities and due dates | `Task` (id, title, description, status, priority, dueDate) |
-| **Tags** | Create and manage colour-coded labels for tasks | `Tag` (id, name, color) |
-| **Task ↔ Tag** | Many-to-many relationship: assign multiple tags to a task | `task_tags` junction table |
+| **habit** | Create, browse, edit and delete habit parameters (type, target value, unit, start/end dates) | `HabitParameter` (id, type, description, startDate, endDate, value, unit, createdAt) |
+| **shell** | App shell: navigation bar, menu, FAB — composes screens from the other slices | — (composition root) |
+| **statistics** | Read-only totals, active/done counts and breakdown by category | — (projection over habit state) |
+| **profile** | Read-only profile/about view with habit counts | — (projection over habit state) |
 
 ### Screens
 
-- 📋 **Task List** — browse tasks, filter by status, complete/delete
-- 🏷️ **Tag List** — manage tag catalogue
-- ➕ **Task Form** — bottom sheet with title, description, priority, due date
-- 🎨 **Tag Form** — bottom sheet with name and colour picker (19 colours)
+- 🏠 **Home** — search and browse habits, swipe to delete, refresh to reload
+- 📈 **Statistics** — total / active / done summary cards and per-category bars
+- 👤 **Profile** — habit counts, joined date, about card
+- ➕ **Habit form** — create/edit page with auto-save, type chips and date pickers
 
 ---
 
@@ -85,8 +86,8 @@ touching the `task` slice.
 
 ```
 lib/
-├── main.dart                          # App entry point
-├── app.dart                           # Root widget, navigation, ProviderScope
+├── main.dart                          # App entry point (DB factory init + runApp)
+├── app.dart                           # HabitizerApp: MaterialApp, theme, ProviderScope
 ├── core/                              # Shared kernel
 │   ├── domain/
 │   │   ├── result.dart                # Result<T> monad
@@ -95,45 +96,35 @@ lib/
 │   ├── application/
 │   │   └── use_case.dart              # IUseCase base class
 │   └── infrastructure/
-│       └── database/
-│           ├── database_helper.dart    # SQLite connection & schema
-│           └── database_module.dart    # Riverpod DB providers
-├── features/
-│   ├── task/                          # Task vertical slice
-│   │   ├── domain/
-│   │   │   ├── entities/task.dart
-│   │   │   ├── repositories/task_repository.dart
-│   │   │   └── failures.dart
-│   │   ├── application/
-│   │   │   ├── services/task_service.dart
-│   │   │   └── dtos/task_dto.dart
-│   │   ├── infrastructure/
-│   │   │   ├── data_sources/task_local_data_source.dart
-│   │   │   └── repositories/task_repository_impl.dart
-│   │   └── presentation/
-│   │       ├── pages/task_list_page.dart
-│   │       ├── widgets/task_card.dart
-│   │       ├── widgets/task_form.dart
-│   │       └── state/task_notifier.dart
-│   ├── tag/                           # Tag vertical slice
-│   │   └── … (mirrors task structure)
-│   └── task_tag/                      # Cross-feature bridge
-│       └── application/services/task_tag_service.dart
-└── shared/
-    ├── database/tables.dart
-    └── extensions/functional_extensions.dart
+│       ├── database/
+│       │   ├── database_helper.dart    # SQLite connection & schema
+│       │   ├── database_module.dart    # Riverpod DB providers
+│       │   └── database_factory_*.dart # platform DB factory selection
+│       └── logging/                    # IAppLogger + console/file/composite impls
+├── shared/                            # Cross-slice, non-architectural code
+│   ├── extensions/functional_extensions.dart
+│   └── widgets/app_logo.dart          # brand logo (used by empty states)
+├── features/                          # Vertical slices
+│   ├── habit/                         # Habit CRUD slice (core state owner)
+│   │   ├── habit.dart                 # public barrel
+│   │   ├── domain/                    # HabitParameter, IHabitParameterRepository, failures
+│   │   ├── application/               # HabitParameterService, HabitParameterDto + mappers
+│   │   ├── infrastructure/            # local data source, repository impl, di/ providers
+│   │   └── presentation/              # list/detail pages, notifier, search provider, card
+│   ├── shell/                         # MainShell: navigation composition root
+│   │   └── presentation/pages/main_shell.dart
+│   ├── statistics/                    # Read-only stats over habit state
+│   │   └── presentation/pages/statistics_page.dart
+│   └── profile/                       # Read-only profile/about over habit state
+│       └── presentation/pages/profile_page.dart
+└── …
 
-test/                                   # Unit & integration tests
+test/                                   # Unit tests mirroring lib/
 ├── core/domain/result_test.dart
-├── features/
-│   ├── task/
-│   │   ├── domain/entities/task_test.dart
-│   │   ├── application/services/task_service_test.dart
-│   ├── tag/
-│   │   ├── domain/entities/tag_test.dart
-│   │   ├── application/services/tag_service_test.dart
-│   └── task_tag/infrastructure/task_tag_integration_test.dart
-└── shared/database/database_test.dart
+├── core/infrastructure/logging/
+└── features/habit/
+    ├── domain/entities/habit_parameter_test.dart
+    └── application/services/habit_parameter_service_test.dart
 
 integration_test/                       # End-to-end Flutter tests
 ├── app_test.dart
@@ -193,23 +184,14 @@ dart run build_runner build --delete-conflicting-outputs
 flutter test
 
 # Specific test file
-flutter test test/features/task/application/services/task_service_test.dart
-```
-
-### Integration tests (persistence layer)
-
-```bash
-# Integration tests use real SQLite via sqflite_common_ffi
-flutter test test/features/task_tag/infrastructure/
-
-# Requires the sqflite_common_ffi dev dependency
+flutter test test/features/habit/application/services/habit_parameter_service_test.dart
 ```
 
 ### End-to-end tests
 
 ```bash
-# E2E tests launch the full Flutter app
-flutter test integration_test/
+# E2E tests launch the full Flutter app on a device/emulator
+flutter test integration_test/ -d <device-id>
 ```
 
 ### Test coverage

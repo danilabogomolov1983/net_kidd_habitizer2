@@ -64,25 +64,6 @@ final class HabitParameterCard extends StatelessWidget {
     }
   }
 
-  String _typeLabel(String type) {
-    switch (type) {
-      case 'strength':
-        return 'strength';
-      case 'cardio':
-        return 'cardio';
-      case 'hydration':
-        return 'hydration';
-      case 'mindfulness':
-        return 'mindfulness';
-      case 'nutrition':
-        return 'nutrition';
-      case 'recovery':
-        return 'recovery';
-      default:
-        return type;
-    }
-  }
-
   String _durationLabel(int totalDays) {
     if (totalDays == 0) return 'today';
     final parts = <String>[];
@@ -176,13 +157,13 @@ final class HabitParameterCard extends StatelessWidget {
                         if (sinceStart >= 0)
                           _DateLine(
                             icon: Icons.play_arrow,
-                            label: '${_durationLabel(sinceStart)}',
+                            label: _durationLabel(sinceStart),
                             color: Colors.grey.shade500,
                           ),
                         if (daysLeft >= 0)
                           _DateLine(
                             icon: Icons.flag,
-                            label: daysLeft == 0 ? 'today' : '${_durationLabel(daysLeft)}',
+                            label: daysLeft == 0 ? 'today' : _durationLabel(daysLeft),
                             color: daysLeft <= 7
                                 ? const Color(0xFFE8445A)
                                 : Colors.grey.shade500,

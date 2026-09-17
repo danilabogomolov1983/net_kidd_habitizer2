@@ -18,17 +18,21 @@ Presentation  ──►  Application  ──►  Domain  ◄──  Infrastructu
 
 ### Vertical Slice Architecture
 
-Each feature (`task`, `tag`, `task_tag`) is a self-contained vertical slice:
+Each feature (`habit`, `shell`, `statistics`, `profile`) is a self-contained
+vertical slice:
 
 ```
-features/task/
+features/habit/
   domain/          ← entities, repository interface, failures
   application/     ← service, DTOs, pure mapping functions
-  infrastructure/  ← data source, repository impl, providers
+  infrastructure/  ← data source, repository impl, di/ providers
   presentation/    ← pages, widgets, state notifier
 ```
 
-Slices are independent: changing the `tag` slice does not break the `task` slice.
+Slices are independent: changing the `statistics` slice does not break the
+`habit` slice. Read-only slices (`statistics`, `profile`) consume habit state
+through the habit barrel; the `shell` slice is the presentation composition
+root.
 
 ## 4.2 Functional Programming Principles
 
@@ -52,4 +56,5 @@ Slices are independent: changing the `tag` slice does not break the `task` slice
 - **Riverpod** for dependency injection and reactive state
 - `Notifier` / `AsyncNotifier` for async request state (loading / error / data)
 - Global providers in `core/infrastructure/database/database_module.dart`
-- Feature-scoped providers in each feature's `infrastructure/repositories/`
+- Slice wiring isolated in each slice's composition root
+  (`features/<slice>/infrastructure/di/`) — application/domain stay framework-free

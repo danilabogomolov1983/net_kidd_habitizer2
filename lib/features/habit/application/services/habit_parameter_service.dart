@@ -1,10 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/domain/result.dart';
 import '../../domain/entities/habit_parameter.dart';
 import '../../domain/failures.dart';
 import '../../domain/repositories/habit_parameter_repository.dart';
-import '../../infrastructure/repositories/habit_parameter_repository_impl.dart';
 
+/// Application-layer service for the habit slice.
+///
+/// Pure Dart: depends only on the domain repository interface. Riverpod
+/// wiring lives in `infrastructure/di/habit_parameter_providers.dart`,
+/// keeping this layer free of any framework or infrastructure dependency.
 final class HabitParameterService {
   final IHabitParameterRepository _repo;
 
@@ -69,8 +72,3 @@ final class HabitParameterService {
     return Result.success(t);
   }
 }
-
-final habitParameterServiceProvider = Provider<HabitParameterService>((ref) {
-  final repo = ref.read(habitParameterRepositoryProvider);
-  return HabitParameterService(repo);
-});

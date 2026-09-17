@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../state/habit_parameter_notifier.dart';
+import '../../../habit/presentation/state/habit_parameter_notifier.dart';
 
 final class StatisticsPage extends ConsumerWidget {
   const StatisticsPage({super.key});

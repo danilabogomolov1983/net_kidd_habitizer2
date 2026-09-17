@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'features/habit/presentation/pages/main_shell.dart';
+import 'features/shell/presentation/pages/main_shell.dart';
 
 final class HabitizerApp extends StatelessWidget {
   const HabitizerApp({super.key});

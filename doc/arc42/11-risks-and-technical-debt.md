@@ -16,5 +16,6 @@
 | No i18n — all strings hardcoded | Low | Extract to ARB files when second language is needed |
 | ~~No structured logging~~ | ~~Low~~ | ✅ Resolved — custom `IAppLogger` + `ConsoleLogger` + `NoOpLogger` implemented |
 | No analytics / crash reporting | Low | Integrate Firebase Crashlytics or Sentry |
-| `TaskForm` and `TagForm` share similar structure but are not abstracted | Low | Create a reusable `FormSheet` widget when a third form appears |
+| Type colours/icons are duplicated in `HabitParameterCard`, the detail page and `StatisticsPage` | Low | Extract a shared `HabitTypeStyle` helper in the habit slice when a fourth copy appears |
 | Integration tests use real SQLite — CI needs `sqflite_common_ffi` | Medium | Document CI setup in `operations/ci.yml` |
+| `IUseCase` base contract is sync-only, but the habit service is async | Low | Either adopt async `call` in `IUseCase` or drop the unused base class |

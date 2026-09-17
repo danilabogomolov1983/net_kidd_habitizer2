@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../application/services/habit_parameter_service.dart';
 import '../../domain/entities/habit_parameter.dart';
+import '../../infrastructure/di/habit_parameter_providers.dart';
 
 final class HabitParameterNotifier extends Notifier<AsyncValue<List<HabitParameter>>> {
   @override
