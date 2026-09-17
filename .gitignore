@@ -12,6 +12,9 @@
 .swiftpm/
 migrate_working_dir/
 
+# App runtime logs (see lib/core/infrastructure/logging/file_logger.dart)
+/logs/
+
 # IntelliJ related
 *.iml
 *.ipr
