@@ -5,7 +5,7 @@ Flutter UI of the habit slice, organised by role:
 ```
 presentation/
 ├── pages/
-│   ├── habit_parameter_list_page.dart   # home tab: LinkedIn-style feed (header, filter pills, cards, empty states)
+│   ├── habit_parameter_list_page.dart   # home tab: LinkedIn-style feed (header, filter pills, cards, empty states, FAB)
 │   └── habit_parameter_detail_page.dart # create/edit form (auto-saves on change, explicit "Done")
 ├── state/
 │   ├── habit_parameter_notifier.dart    # HabitParameterNotifier (CRUD over AsyncValue<List<HabitParameter>>)
@@ -21,6 +21,9 @@ presentation/
   counts, and post-style cards whose action row (Log / Edit / Delete) stands
   in for Like / Comment / Share. Delete is confirmed via dialog and also
   offered in the card's ⋮ bottom sheet.
+- The "New habit" icon-only FAB floats **over** the shell's bottom bar,
+  right-aligned (`Scaffold` with `endFloat` inside this page); the feed lists
+  reserve bottom padding so the last card is never hidden behind it.
 - All colours come from the theme (`context.habitizer…`) and category identity
   from `shared/widgets/habit_type_style.dart`; no hard-coded hex values.
 

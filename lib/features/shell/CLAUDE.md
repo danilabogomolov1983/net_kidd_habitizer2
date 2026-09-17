@@ -14,10 +14,11 @@ slice) in an `IndexedStack`. There is no global `AppBar` — each tab owns its
 header (search on Home, title on Statistics, hero on Profile), mirroring the
 LinkedIn mobile structure.
 
-The bottom bar (`_AppBottomBar` + `_NavItem`) is custom: icon+label tabs with
-the creation action (`New habit`, tooltip required by the integration tests)
-elevated as a primary-coloured circle between the tabs. It routes to
-`HabitParameterDetailPage` via `MaterialPageRoute`.
+The bottom bar (`_AppBottomBar` + `_NavItem`) is custom: three icon+label
+tabs (Home, Statistics, Profile). The primary creation action is **not** part
+of the bar — it lives on the home tab as an icon-only FAB (`New habit`,
+tooltip required by the integration tests) floating right-aligned over the
+bar. It routes to `HabitParameterDetailPage` via `MaterialPageRoute`.
 
 **Conventions**
 - This is the only slice allowed to import sibling slice pages directly

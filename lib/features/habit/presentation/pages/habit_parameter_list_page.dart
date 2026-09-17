@@ -25,91 +25,116 @@ final class HabitParameterListPage extends ConsumerWidget {
     final query = ref.watch(searchQueryProvider);
     final filter = ref.watch(habitFeedFilterProvider);
 
-    return Column(
-      children: [
-        _FeedHeader(query: query, onQueryChanged: (v) => ref.read(searchQueryProvider.notifier).state = v),
-        Expanded(
-          child: async.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => EmptyState(
-              icon: Icons.cloud_off_outlined,
-              title: 'Couldn\'t load your habits',
-              subtitle: '$err',
-              action: FilledButton(
-                onPressed: notifier.load,
-                child: const Text('Try again'),
-              ),
-            ),
-            data: (list) {
-              if (list.isEmpty) {
-                return _FeedEmpty(onCreate: () => _pushDetail(context));
-              }
-
-              final filtered = list
-                  .where(filter.accepts)
-                  .where((h) => h.description
-                      .toLowerCase()
-                      .contains(query.trim().toLowerCase()))
-                  .toList();
-
-              return Column(
-                children: [
-                  _FilterBar(
-                    list: list,
-                    selected: filter,
-                    onSelected: (f) =>
-                        ref.read(habitFeedFilterProvider.notifier).state = f,
-                  ),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? EmptyState(
-                            icon: Icons.search_off,
-                            title: 'No matches',
-                            subtitle:
-                                'Nothing fits this filter${query.trim().isEmpty ? '' : ' and search'}. Try a different combination.',
-                            action: OutlinedButton(
-                              onPressed: () {
-                                ref.read(searchQueryProvider.notifier).state = '';
-                                ref
-                                    .read(habitFeedFilterProvider.notifier)
-                                    .state = HabitFeedFilter.all;
-                              },
-                              child: const Text('Clear filters'),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: () async => notifier.load(),
-                            child: ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                              itemCount: filtered.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (ctx, i) {
-                                final p = filtered[i];
-                                return HabitParameterCard(
-                                  param: p,
-                                  onTap: () => _pushDetail(context, param: p),
-                                  onEdit: () => _pushDetail(context, param: p),
-                                  onDelete: () => notifier.delete(p.id),
-                                );
-                              },
-                            ),
-                          ),
-                  ),
-                ],
-              );
-            },
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Column(
+        children: [
+          _FeedHeader(
+            query: query,
+            onQueryChanged: (v) =>
+                ref.read(searchQueryProvider.notifier).state = v,
           ),
-        ),
-      ],
+          Expanded(
+            child: async.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => EmptyState(
+                icon: Icons.cloud_off_outlined,
+                title: 'Couldn\'t load your habits',
+                subtitle: '$err',
+                action: IconButton.filled(
+                  onPressed: notifier.load,
+                  tooltip: 'Try again',
+                  icon: const Icon(Icons.refresh),
+                ),
+              ),
+              data: (list) {
+                if (list.isEmpty) {
+                  return _FeedEmpty(onCreate: () => _pushDetail(context));
+                }
+
+                final filtered = list
+                    .where(filter.accepts)
+                    .where(
+                      (h) => h.description.toLowerCase().contains(
+                        query.trim().toLowerCase(),
+                      ),
+                    )
+                    .toList();
+
+                return Column(
+                  children: [
+                    _FilterBar(
+                      list: list,
+                      selected: filter,
+                      onSelected: (f) =>
+                          ref.read(habitFeedFilterProvider.notifier).state = f,
+                    ),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? EmptyState(
+                              icon: Icons.search_off,
+                              title: 'No matches',
+                              subtitle:
+                                  'Nothing fits this filter${query.trim().isEmpty ? '' : ' and search'}. Try a different combination.',
+                              action: IconButton.outlined(
+                                onPressed: () {
+                                  ref.read(searchQueryProvider.notifier).state =
+                                      '';
+                                  ref
+                                      .read(habitFeedFilterProvider.notifier)
+                                      .state = HabitFeedFilter
+                                      .all;
+                                },
+                                tooltip: 'Clear filters',
+                                icon: const Icon(Icons.filter_alt_off),
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: () async => notifier.load(),
+                              child: ListView.separated(
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  10,
+                                  12,
+                                  96,
+                                ),
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (ctx, i) {
+                                  final p = filtered[i];
+                                  return HabitParameterCard(
+                                    param: p,
+                                    onTap: () => _pushDetail(context, param: p),
+                                    onEdit: () =>
+                                        _pushDetail(context, param: p),
+                                    onDelete: () => notifier.delete(p.id),
+                                  );
+                                },
+                              ),
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      // Primary creation action — floats over the shell's bottom bar,
+      // right-aligned (Material's standard FAB position).
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _pushDetail(context),
+        tooltip: 'New habit',
+        child: const Icon(Icons.add, size: 26),
+      ),
     );
   }
 
   void _pushDetail(BuildContext context, {HabitParameter? param}) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => HabitParameterDetailPage(param: param),
-      ),
+      MaterialPageRoute(builder: (_) => HabitParameterDetailPage(param: param)),
     );
   }
 }
@@ -155,10 +180,12 @@ final class _FeedHeader extends StatelessWidget {
                   isDense: true,
                   filled: true,
                   fillColor: palette.searchFill,
-                  prefixIcon: Icon(Icons.search,
-                      size: 20, color: palette.mutedText),
-                  prefixIconConstraints:
-                      const BoxConstraints(minWidth: 40),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 20,
+                    color: palette.mutedText,
+                  ),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 40),
                   suffixIcon: query.isEmpty
                       ? null
                       : IconButton(
@@ -167,8 +194,7 @@ final class _FeedHeader extends StatelessWidget {
                           tooltip: 'Clear search',
                           onPressed: () => onQueryChanged(''),
                         ),
-                  suffixIconConstraints:
-                      const BoxConstraints(minWidth: 36),
+                  suffixIconConstraints: const BoxConstraints(minWidth: 36),
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
@@ -281,8 +307,10 @@ final class _FilterPill extends StatelessWidget {
               if (count > 0) ...[
                 const SizedBox(width: 5),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? scheme.onPrimary.withValues(alpha: 0.22)
@@ -319,7 +347,7 @@ final class _FeedEmpty extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 96),
       children: [
         // LinkedIn-style "start a post" card.
         Container(
@@ -338,16 +366,18 @@ final class _FeedEmpty extends StatelessWidget {
                   color: scheme.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.checklist_rtl,
-                    size: 30, color: scheme.primary),
+                child: Icon(
+                  Icons.checklist_rtl,
+                  size: 30,
+                  color: scheme.primary,
+                ),
               ),
               const SizedBox(height: 14),
               Text(
                 'Start tracking your first habit',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
@@ -361,13 +391,11 @@ final class _FeedEmpty extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: onCreate,
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Create habit'),
-                ),
+              IconButton.filled(
+                onPressed: onCreate,
+                tooltip: 'Create habit',
+                icon: const Icon(Icons.add),
+                iconSize: 26,
               ),
             ],
           ),

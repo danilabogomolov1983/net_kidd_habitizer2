@@ -11,7 +11,8 @@ and made dark mode impossible. All tokens now live here:
   colours (canvas, surface, border, search fill, muted text, gradients).
   Widgets read them via `context.habitizer.*`.
 - `buildLightTheme()` / `buildDarkTheme()` — component themes (cards, inputs,
-  pill buttons, sheets, dialogs, snackbars) in one place.
+  pill buttons, the extended "New habit" FAB, sheets, dialogs, snackbars) in
+  one place.
 - `themeModeProvider` — user theme preference (`ThemeMode`), watched by
   `app.dart` (`themeMode`) and toggled on the profile tab.
 

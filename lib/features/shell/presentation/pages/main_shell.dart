@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../habit/presentation/pages/habit_parameter_detail_page.dart';
 import '../../../habit/presentation/pages/habit_parameter_list_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../statistics/presentation/pages/statistics_page.dart';
@@ -29,40 +28,25 @@ class _MainShellState extends ConsumerState<MainShell> {
     ProfilePage(),
   ];
 
-  void _openCreate() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const HabitParameterDetailPage()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: _AppBottomBar(
         currentIndex: _currentIndex,
         onSelect: (i) => setState(() => _currentIndex = i),
-        onCreate: _openCreate,
       ),
     );
   }
 }
 
-/// LinkedIn-style bottom bar: icon+label tabs with the creation action
-/// elevated in the centre.
+/// LinkedIn-style bottom bar: three icon+label tabs. The primary creation
+/// action lives on the home tab as a FAB floating over this bar.
 final class _AppBottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onSelect;
-  final VoidCallback onCreate;
 
-  const _AppBottomBar({
-    required this.currentIndex,
-    required this.onSelect,
-    required this.onCreate,
-  });
+  const _AppBottomBar({required this.currentIndex, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -95,31 +79,6 @@ final class _AppBottomBar extends StatelessWidget {
                   label: 'Statistics',
                   selected: currentIndex == 1,
                   onTap: () => onSelect(1),
-                ),
-              ),
-              // Centre creation action — the "post" of this app.
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Tooltip(
-                  message: 'New habit',
-                  child: Material(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: const CircleBorder(),
-                    elevation: 2,
-                    shadowColor: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.5),
-                    child: InkWell(
-                      onTap: onCreate,
-                      customBorder: const CircleBorder(),
-                      child: const SizedBox(
-                        width: 46,
-                        height: 46,
-                        child: Icon(Icons.add, color: Colors.white, size: 26),
-                      ),
-                    ),
-                  ),
                 ),
               ),
               Expanded(

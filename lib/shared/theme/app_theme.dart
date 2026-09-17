@@ -144,28 +144,31 @@ extension HabitizerThemeX on BuildContext {
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
 // ── ThemeData builders ───────────────────────────────────────
-ThemeData buildLightTheme() => _buildTheme(Brightness.light, HabitizerPalette.light);
+ThemeData buildLightTheme() =>
+    _buildTheme(Brightness.light, HabitizerPalette.light);
 
-ThemeData buildDarkTheme() => _buildTheme(Brightness.dark, HabitizerPalette.dark);
+ThemeData buildDarkTheme() =>
+    _buildTheme(Brightness.dark, HabitizerPalette.dark);
 
 ThemeData _buildTheme(Brightness brightness, HabitizerPalette palette) {
   final isLight = brightness == Brightness.light;
   final primary = isLight ? Brand.blue : Brand.blueLight;
   final onSurface = isLight ? const Color(0xFF1F1F23) : const Color(0xFFE7E9EA);
 
-  final scheme = ColorScheme.fromSeed(
-    seedColor: Brand.blue,
-    brightness: brightness,
-  ).copyWith(
-    primary: primary,
-    onPrimary: isLight ? Colors.white : const Color(0xFF0B2B4A),
-    surface: palette.surface,
-    onSurface: onSurface,
-    onSurfaceVariant: palette.mutedText,
-    outline: palette.border,
-    outlineVariant: palette.border,
-    error: palette.danger,
-  );
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: Brand.blue,
+        brightness: brightness,
+      ).copyWith(
+        primary: primary,
+        onPrimary: isLight ? Colors.white : const Color(0xFF0B2B4A),
+        surface: palette.surface,
+        onSurface: onSurface,
+        onSurfaceVariant: palette.mutedText,
+        outline: palette.border,
+        outlineVariant: palette.border,
+        error: palette.danger,
+      );
 
   final radius10 = BorderRadius.circular(10);
 
@@ -225,6 +228,12 @@ ThemeData _buildTheme(Brightness brightness, HabitizerPalette palette) {
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
       ),
     ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: Brand.blue,
+      foregroundColor: Colors.white,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: primary,
@@ -256,16 +265,45 @@ ThemeData _buildTheme(Brightness brightness, HabitizerPalette palette) {
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
     textTheme: TextTheme(
-      headlineSmall: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: onSurface, letterSpacing: -0.2),
-      titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: onSurface),
-      titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: onSurface),
-      titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: onSurface),
+      headlineSmall: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: onSurface,
+        letterSpacing: -0.2,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: onSurface,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: onSurface,
+      ),
+      titleSmall: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: onSurface,
+      ),
       bodyLarge: TextStyle(fontSize: 15, color: onSurface),
       bodyMedium: TextStyle(fontSize: 14, color: onSurface),
       bodySmall: TextStyle(fontSize: 12.5, color: palette.mutedText),
-      labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: onSurface),
-      labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: palette.mutedText),
-      labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: palette.mutedText),
+      labelLarge: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: onSurface,
+      ),
+      labelMedium: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: palette.mutedText,
+      ),
+      labelSmall: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: palette.mutedText,
+      ),
     ),
   );
 }

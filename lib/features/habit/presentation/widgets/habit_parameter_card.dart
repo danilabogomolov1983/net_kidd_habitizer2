@@ -398,25 +398,14 @@ final class _ActionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.habitizer;
     return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 19, color: palette.mutedText),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: palette.mutedText,
-                ),
-              ),
-            ],
+      child: Tooltip(
+        message: label,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Icon(icon, size: 22, color: palette.mutedText),
           ),
         ),
       ),

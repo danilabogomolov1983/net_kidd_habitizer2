@@ -339,9 +339,15 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
             ],
 
             const SizedBox(height: 28),
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
+            Tooltip(
+              message: 'Done',
+              child: FilledButton(
+                onPressed: () => Navigator.pop(context),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(64, 48),
+                ),
+                child: const Icon(Icons.check, size: 24),
+              ),
             ),
             const SizedBox(height: 8),
             Center(

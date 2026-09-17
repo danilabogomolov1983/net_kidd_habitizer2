@@ -24,7 +24,11 @@ final class StatisticsPage extends ConsumerWidget {
         icon: Icons.cloud_off_outlined,
         title: 'Couldn\'t load insights',
         subtitle: '$err',
-        action: FilledButton(onPressed: notifier.load, child: const Text('Try again')),
+        action: IconButton.filled(
+          onPressed: notifier.load,
+          tooltip: 'Try again',
+          icon: const Icon(Icons.refresh),
+        ),
       ),
       data: (habits) {
         if (habits.isEmpty) {
