@@ -5,7 +5,7 @@ Read-only statistics slice.
 ```
 statistics/
 └── presentation/
-    └── pages/statistics_page.dart   # totals, active/done counts, breakdown by category
+    └── pages/statistics_page.dart   # "Insights": gradient hero + completion ring, KPIs, category bars, due-soon list
 ```
 
 `StatisticsPage` is a pure projection over habit state: it watches

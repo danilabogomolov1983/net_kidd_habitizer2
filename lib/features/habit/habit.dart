@@ -13,6 +13,7 @@ export 'application/dtos/habit_parameter_dto.dart';
 export 'application/services/habit_parameter_service.dart';
 export 'presentation/state/habit_parameter_notifier.dart';
 export 'presentation/state/habit_search_provider.dart';
+export 'presentation/state/habit_feed_filter_provider.dart';
 export 'presentation/pages/habit_parameter_list_page.dart';
 export 'presentation/pages/habit_parameter_detail_page.dart';
 export 'presentation/widgets/habit_parameter_card.dart';

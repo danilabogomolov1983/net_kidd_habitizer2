@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/habit_type_style.dart';
 import '../../domain/entities/habit_parameter.dart';
 import '../state/habit_parameter_notifier.dart';
 
+/// Create/edit form for a habit parameter.
+///
+/// Auto-saves on every change (no explicit save step — the draft is the
+/// habit), so users can back out at any time without losing anything.
+/// A "Done" pill button provides explicit closure.
 final class HabitParameterDetailPage extends ConsumerStatefulWidget {
   final HabitParameter? param;
   final String? presetDescription;
@@ -35,19 +42,7 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
   HabitParameter? _saved;
   bool _isSaving = false;
   bool _dirty = false;
-
-  static const _primaryBlue = Color(0xFF0058A3);
-  static const _types = [
-    'health',
-    'fitness',
-    'strength',
-    'cardio',
-    'nutrition',
-    'hydration',
-    'sleep',
-    'mindfulness',
-    'recovery',
-  ];
+  bool _ready = false;
 
   @override
   void initState() {
@@ -84,53 +79,6 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
   }
 
   bool get _isNew => widget.isNew && _saved == null;
-  bool _ready = false;
-
-  Color _typeColor(String t) => switch (t) {
-        'health' => const Color(0xFFE8445A),
-        'nutrition' => const Color(0xFFFF8C42),
-        'fitness' => _primaryBlue,
-        'strength' => _primaryBlue,
-        'cardio' => _primaryBlue,
-        'hydration' => const Color(0xFF00A8D6),
-        'sleep' => const Color(0xFF7C5CFC),
-        'mindfulness' => const Color(0xFF5E9B7C),
-        'recovery' => const Color(0xFF7C5CFC),
-        _ => _primaryBlue,
-      };
-
-  IconData _typeIcon(String t) => switch (t) {
-        'health' => Icons.favorite,
-        'nutrition' => Icons.restaurant,
-        'fitness' => Icons.fitness_center,
-        'strength' => Icons.fitness_center,
-        'cardio' => Icons.directions_run,
-        'hydration' => Icons.water_drop,
-        'sleep' => Icons.bedtime,
-        'mindfulness' => Icons.self_improvement,
-        'recovery' => Icons.healing,
-        _ => Icons.check_circle_outline,
-      };
-
-  String _durationLabel(int totalDays) {
-    if (totalDays == 0) return 'now';
-    final parts = <String>[];
-    int r = totalDays;
-    if (r >= 365) {
-      parts.add('${r ~/ 365}y');
-      r %= 365;
-    }
-    if (r >= 30) {
-      parts.add('${r ~/ 30}m');
-      r %= 30;
-    }
-    if (r >= 7) {
-      parts.add('${r ~/ 7}w');
-      r %= 7;
-    }
-    if (r > 0 || parts.isEmpty) parts.add('${r}d');
-    return parts.join(' ');
-  }
 
   Future<void> _pickDate(bool isStart) async {
     final now = DateTime.now();
@@ -217,202 +165,191 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final palette = context.habitizer;
     final daysLeft = _days(_endDate);
     final sinceStart = _since(_startDate);
-    final p = _saved ?? widget.param;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text(_isNew ? 'New Habit' : (p?.description ?? '')),
+        title: Text(_isNew ? 'New habit' : 'Edit habit'),
         actions: [
           if (!_isNew)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Color(0xFFE8445A)),
+              icon: Icon(Icons.delete_outline, color: palette.danger),
+              tooltip: 'Delete',
               onPressed: _delete,
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
-            // ── Description ──────────────────────────
-            _SectionLabel(text: 'What'),
+            // ── Category ──────────────────────────────
+            const _FieldLabel(text: 'Category'),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: habitTypes.map((t) {
+                final color = habitTypeColor(t);
+                final selected = _type == t;
+                return _CategoryPill(
+                  type: t,
+                  selected: selected,
+                  color: color,
+                  onTap: () {
+                    setState(() => _type = t);
+                    _dirty = true;
+                    _save();
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Description ───────────────────────────
+            const _FieldLabel(text: 'What are you tracking?'),
             const SizedBox(height: 8),
-            Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                child: TextFormField(
-                  controller: _descCtrl,
-                  maxLength: 30,
-                  decoration: const InputDecoration(
-                    hintText: 'e.g. Morning run',
-                    border: InputBorder.none,
-                    counterText: '',
-                    contentPadding: EdgeInsets.zero,
-                    isDense: true,
-                  ),
-                  textCapitalization: TextCapitalization.words,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w500),
+            _FieldCard(
+              child: TextFormField(
+                controller: _descCtrl,
+                maxLength: 30,
+                autofocus: _isNew,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. Morning run',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  counterText: '',
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
                 ),
+                textCapitalization: TextCapitalization.words,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 14),
-
-            // ── Value + Unit (side by side) ──
-            _SectionLabel(text: 'Target'),
+            // ── Target (value + unit) ─────────────────
+            const _FieldLabel(text: 'Target'),
             const SizedBox(height: 8),
             Row(
               children: [
-                // Value
                 Expanded(
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 2),
-                      child: TextFormField(
-                        controller: _valueCtrl,
-                        decoration: const InputDecoration(
-                          hintText: '0',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          isDense: true,
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: _primaryBlue,
-                        ),
-                        textAlign: TextAlign.center,
+                  child: _FieldCard(
+                    child: TextFormField(
+                      controller: _valueCtrl,
+                      decoration: const InputDecoration(
+                        hintText: '0',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: scheme.primary,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Unit
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 2),
-                      child: TextFormField(
-                        controller: _unitCtrl,
-                        decoration: const InputDecoration(
-                          hintText: 'km',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          isDense: true,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
+                  child: _FieldCard(
+                    child: TextFormField(
+                      controller: _unitCtrl,
+                      decoration: const InputDecoration(
+                        hintText: 'unit (km, min…)',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: palette.mutedText,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 14),
-
-            // ── Dates ──────────────────────────────────
-            _SectionLabel(text: 'Duration'),
+            // ── Duration ──────────────────────────────
+            const _FieldLabel(text: 'Duration'),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: _DateCard(
+                  child: _DateTile(
                     date: _startDate,
                     icon: Icons.play_circle_outline,
-                    color: _primaryBlue,
+                    color: scheme.primary,
+                    label: 'Start',
                     onTap: () => _pickDate(true),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: _DateCard(
+                  child: _DateTile(
                     date: _endDate,
-                    icon: Icons.flag_circle_outlined,
+                    icon: Icons.flag_outlined,
                     color: const Color(0xFF7C5CFC),
+                    label: 'End',
                     onTap: () => _pickDate(false),
                   ),
                 ),
               ],
             ),
-            // Status line
             if (!_isNew && (sinceStart >= 0 || daysLeft >= 0)) ...[
-              const SizedBox(height: 10),
-              Center(
-                child: _StatusBadge(
-                  sinceStart: sinceStart,
-                  daysLeft: daysLeft,
-                  durationLabel: _durationLabel,
-                ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (sinceStart >= 0)
+                    _StatusBadge(
+                      icon: Icons.play_circle_outline,
+                      label: 'Started ${_durationLabel(sinceStart)} ago',
+                      color: scheme.primary,
+                    ),
+                  if (daysLeft >= 0)
+                    _StatusBadge(
+                      icon: Icons.flag_outlined,
+                      label: daysLeft == 0
+                          ? 'Ends today'
+                          : '${_durationLabel(daysLeft)} left',
+                      color: daysLeft <= 7
+                          ? palette.danger
+                          : const Color(0xFF7C5CFC),
+                    ),
+                ],
               ),
             ],
 
-            const SizedBox(height: 14),
-
-            // ── Type chips ─────────────────────────────
-            _SectionLabel(text: 'Category'),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 5,
-              runSpacing: 5,
-              children: _types.map((t) {
-                final selected = _type == t;
-                final tc = _typeColor(t);
-                final ic = _typeIcon(t);
-                return ChoiceChip(
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(ic, size: 14, color: selected ? Colors.white : tc),
-                      const SizedBox(width: 4),
-                      Text(t,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: selected ? Colors.white : tc,
-                          )),
-                    ],
-                  ),
-                  selected: selected,
-                  onSelected: (_) {
-                    setState(() => _type = t);
-                    _dirty = true;
-                    _save();
-                  },
-                  selectedColor: tc,
-                  backgroundColor: Colors.white,
-                  side: BorderSide(
-                      color: tc.withAlpha(selected ? 0 : 60)),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                  labelPadding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                );
-              }).toList(),
+            const SizedBox(height: 28),
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
             ),
-
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            Center(
+              child: Text(
+                'Changes save automatically',
+                style: TextStyle(fontSize: 12, color: palette.mutedText),
+              ),
+            ),
           ],
         ),
       ),
@@ -422,68 +359,119 @@ class _DetailState extends ConsumerState<HabitParameterDetailPage> {
   int _days(DateTime? d) => d != null ? d.difference(DateTime.now()).inDays : -1;
   int _since(DateTime? d) =>
       d != null ? DateTime.now().difference(d).inDays : -1;
+
+  static String _durationLabel(int totalDays) {
+    if (totalDays == 0) return 'today';
+    final parts = <String>[];
+    var r = totalDays;
+    if (r >= 365) {
+      parts.add('${r ~/ 365}y');
+      r %= 365;
+    }
+    if (r >= 30) {
+      parts.add('${r ~/ 30}mo');
+      r %= 30;
+    }
+    if (r >= 7) {
+      parts.add('${r ~/ 7}w');
+      r %= 7;
+    }
+    if (r > 0 || parts.isEmpty) parts.add('${r}d');
+    return parts.join(' ');
+  }
 }
 
-// ── Section label ───────────────────────────────────────────
-class _SectionLabel extends StatelessWidget {
+// ── Field label ──────────────────────────────────────────────
+final class _FieldLabel extends StatelessWidget {
   final String text;
-  const _SectionLabel({required this.text});
+  const _FieldLabel({required this.text});
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
-            letterSpacing: 0.3,
-          ),
+  Widget build(BuildContext context) {
+    final palette = context.habitizer;
+    return Padding(
+      padding: const EdgeInsets.only(left: 2),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: palette.mutedText,
+          letterSpacing: 0.2,
         ),
-      );
+      ),
+    );
+  }
 }
 
-// ── Date card ───────────────────────────────────────────────
-class _DateCard extends StatelessWidget {
-  final DateTime? date;
-  final IconData icon;
+// ── Card wrapper for form fields ─────────────────────────────
+final class _FieldCard extends StatelessWidget {
+  final Widget child;
+  const _FieldCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.habitizer;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: palette.border),
+      ),
+      child: child,
+    );
+  }
+}
+
+// ── Category pill ────────────────────────────────────────────
+final class _CategoryPill extends StatelessWidget {
+  final String type;
+  final bool selected;
   final Color color;
   final VoidCallback onTap;
-  const _DateCard({
-    required this.date,
-    required this.icon,
+
+  const _CategoryPill({
+    required this.type,
+    required this.selected,
     required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasDate = date != null;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final palette = context.habitizer;
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected ? color : palette.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? color : palette.border,
+            ),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon,
-                  size: 15,
-                  color: hasDate ? color : Colors.grey.shade400),
-              const SizedBox(width: 4),
+              Icon(
+                habitTypeIcon(type),
+                size: 15,
+                color: selected ? Colors.white : color,
+              ),
+              const SizedBox(width: 6),
               Text(
-                hasDate
-                    ? '${date!.day.toString().padLeft(2, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.year}'
-                    : '—',
+                habitTypeLabel(type),
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: hasDate
-                      ? const Color(0xFF1A1A2E)
-                      : Colors.grey.shade400,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : color,
                 ),
               ),
             ],
@@ -494,46 +482,86 @@ class _DateCard extends StatelessWidget {
   }
 }
 
-// ── Status badge ────────────────────────────────────────────
-class _StatusBadge extends StatelessWidget {
-  final int sinceStart;
-  final int daysLeft;
-  final String Function(int) durationLabel;
+// ── Date tile ────────────────────────────────────────────────
+final class _DateTile extends StatelessWidget {
+  final DateTime? date;
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
 
-  const _StatusBadge({
-    required this.sinceStart,
-    required this.daysLeft,
-    required this.durationLabel,
+  const _DateTile({
+    required this.date,
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final chips = <Widget>[];
-    if (sinceStart >= 0) {
-      chips.add(_Chip(
-        icon: Icons.play_circle_outline,
-        label: 'Started ${durationLabel(sinceStart)} ago',
-        color: const Color(0xFF0058A3),
-      ));
-      chips.add(const SizedBox(width: 8));
-    }
-    if (daysLeft >= 0) {
-      chips.add(_Chip(
-        icon: Icons.flag_circle_outlined,
-        label: daysLeft == 0 ? 'Ends today' : '${durationLabel(daysLeft)} left',
-        color: daysLeft <= 7 ? const Color(0xFFE8445A) : const Color(0xFF7C5CFC),
-      ));
-    }
-    if (chips.isEmpty) return const SizedBox.shrink();
-    return Row(mainAxisSize: MainAxisSize.min, children: chips);
+    final palette = context.habitizer;
+    final hasDate = date != null;
+
+    return Material(
+      color: palette.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: palette.border),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 17, color: hasDate ? color : palette.mutedText),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: palette.mutedText,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hasDate
+                          ? '${date!.day.toString().padLeft(2, '0')}-${date!.month.toString().padLeft(2, '0')}-${date!.year}'
+                          : 'Add date',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: hasDate
+                            ? Theme.of(context).colorScheme.onSurface
+                            : palette.mutedText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, size: 18, color: palette.mutedText),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
-class _Chip extends StatelessWidget {
+// ── Status badge ─────────────────────────────────────────────
+final class _StatusBadge extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  const _Chip({
+
+  const _StatusBadge({
     required this.icon,
     required this.label,
     required this.color,
@@ -541,21 +569,24 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withAlpha(20),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14, color: color),
-            const SizedBox(width: 5),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: color)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
           ],
         ),
       );

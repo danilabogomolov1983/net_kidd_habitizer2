@@ -5,12 +5,14 @@ Read-only profile/about slice.
 ```
 profile/
 └── presentation/
-    └── pages/profile_page.dart   # avatar, habit counts, "Joined" date, about card
+    └── pages/profile_page.dart   # LinkedIn-style profile: gradient cover, avatar, stats, preferences, about
 ```
 
 `ProfilePage` watches `habitParameterNotifierProvider` (via the habit slice's
 barrel) to derive the counts and the earliest `createdAt`. It never mutates
-habit state and has no persistence of its own.
+habit state and has no persistence of its own. The one app-wide preference it
+owns is the dark-mode toggle, which writes to `themeModeProvider`
+(`lib/shared/theme/app_theme.dart`).
 
 **Conventions**
 - Same as statistics: read habit state through the barrel only.

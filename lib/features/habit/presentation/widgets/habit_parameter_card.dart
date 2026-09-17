@@ -1,79 +1,310 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/habit_avatar.dart';
+import '../../../../shared/widgets/habit_type_style.dart';
 import '../../domain/entities/habit_parameter.dart';
 
+/// LinkedIn-post-style feed card for a habit.
+///
+/// Anatomy (mirroring a LinkedIn post): avatar + title + meta line + overflow
+/// menu, a "body" (target value + status), and an action row
+/// (Log / Edit / Delete) instead of Like / Comment / Repost / Send.
 final class HabitParameterCard extends StatelessWidget {
   final HabitParameter param;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   const HabitParameterCard({
     super.key,
     required this.param,
     this.onTap,
+    this.onEdit,
     this.onDelete,
   });
 
-  static const _primaryBlue = Color(0xFF0058A3);
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.habitizer;
+    final typeColor = habitTypeColor(param.type);
 
-  Color _typeColor(String type) {
-    switch (type) {
-      case 'health':
-        return const Color(0xFFE8445A);
-      case 'food':
-      case 'nutrition':
-        return const Color(0xFFFF8C42);
-      case 'fitness':
-      case 'strength':
-      case 'cardio':
-        return _primaryBlue;
-      case 'sleep':
-      case 'recovery':
-        return const Color(0xFF7C5CFC);
-      case 'hydration':
-        return const Color(0xFF00A8D6);
-      case 'mindfulness':
-        return const Color(0xFF5E9B7C);
-      default:
-        return _primaryBlue;
+    final now = DateTime.now();
+    final end = param.endDate;
+    final start = param.startDate;
+    final daysLeft = end != null ? end.difference(now).inDays : -1;
+    final isCompleted = daysLeft < 0;
+    final isDueSoon = !isCompleted && daysLeft <= 7;
+
+    // Progress between start and end date (only meaningful when both exist).
+    double? progress;
+    String? progressLabel;
+    if (start != null && end != null && !isCompleted) {
+      final total = end.difference(start).inDays;
+      final elapsed = now.difference(start).inDays.clamp(0, total == 0 ? 0 : total);
+      progress = total <= 0 ? 1.0 : (elapsed / total).clamp(0.0, 1.0);
+      progressLabel = daysLeft == 0 ? 'ends today' : '${_durationLabel(daysLeft)} left';
     }
+
+    final meta = _metaLine(param.type, start, end, now);
+    final valueText = param.value == param.value.truncateToDouble()
+        ? param.value.toInt().toString()
+        : param.value.toString();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: palette.border),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 8, 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header: avatar, title, meta, overflow menu ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HabitAvatar(type: param.type, size: 46),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          param.description,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          meta,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: palette.mutedText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.more_horiz,
+                        size: 22, color: palette.mutedText),
+                    tooltip: 'More',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _showMenu(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // ── Body: target value + status chip ──
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            valueText,
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                              color: typeColor,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            param.unit,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: palette.mutedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _StatusChip(
+                      completed: isCompleted,
+                      dueSoon: isDueSoon,
+                      daysLeft: daysLeft,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // ── Progress bar (when both dates are set) ──
+              if (progress != null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 6,
+                          backgroundColor: typeColor.withValues(alpha: 0.14),
+                          valueColor: AlwaysStoppedAnimation(typeColor),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Text(
+                            '${(progress * 100).round()}%',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: typeColor,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            progressLabel!,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDueSoon
+                                  ? palette.danger
+                                  : palette.mutedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+
+              // ── Action row (Like / Comment / Share equivalent) ──
+              Divider(height: 1, color: palette.border),
+              Row(
+                children: [
+                  _ActionItem(
+                    icon: Icons.add_task_outlined,
+                    label: 'Log',
+                    onTap: onTap,
+                  ),
+                  _ActionItem(
+                    icon: Icons.mode_edit_outline,
+                    label: 'Edit',
+                    onTap: onEdit,
+                  ),
+                  _ActionItem(
+                    icon: Icons.delete_outline,
+                    label: 'Delete',
+                    onTap: onDelete == null
+                        ? null
+                        : () => _confirmDelete(context),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  IconData _typeIcon(String type) {
-    switch (type) {
-      case 'health':
-        return Icons.favorite;
-      case 'food':
-      case 'nutrition':
-        return Icons.restaurant;
-      case 'fitness':
-        return Icons.fitness_center;
-      case 'strength':
-        return Icons.fitness_center;
-      case 'cardio':
-        return Icons.directions_run;
-      case 'sleep':
-        return Icons.bedtime;
-      case 'hydration':
-        return Icons.water_drop;
-      case 'mindfulness':
-        return Icons.self_improvement;
-      case 'recovery':
-        return Icons.healing;
-      default:
-        return Icons.check_circle_outline;
-    }
+  // ── Overflow menu: LinkedIn-style bottom sheet ─────────────
+  void _showMenu(BuildContext context) {
+    final palette = context.habitizer;
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 6),
+            ListTile(
+              leading: const Icon(Icons.add_task_outlined),
+              title: const Text('Log progress'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                onTap?.call();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.mode_edit_outline),
+              title: const Text('Edit habit'),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                onEdit?.call();
+              },
+            ),
+            if (onDelete != null)
+              ListTile(
+                leading:
+                    Icon(Icons.delete_outline, color: palette.danger),
+                title: Text('Delete habit',
+                    style: TextStyle(color: palette.danger)),
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  _confirmDelete(context);
+                },
+              ),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
   }
 
-  String _durationLabel(int totalDays) {
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Delete habit?'),
+            content: Text('Remove "${param.description}"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('Delete',
+                    style: TextStyle(color: context.habitizer.danger)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (confirmed) onDelete?.call();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────
+  static String _durationLabel(int totalDays) {
     if (totalDays == 0) return 'today';
     final parts = <String>[];
-    int r = totalDays;
+    var r = totalDays;
     if (r >= 365) {
       parts.add('${r ~/ 365}y');
       r %= 365;
     }
     if (r >= 30) {
-      parts.add('${r ~/ 30}m');
+      parts.add('${r ~/ 30}mo');
       r %= 30;
     }
     if (r >= 7) {
@@ -84,203 +315,111 @@ final class HabitParameterCard extends StatelessWidget {
     return parts.join(' ');
   }
 
-  int _days(DateTime? d) => d?.difference(DateTime.now()).inDays ?? -1;
-  int _since(DateTime? d) =>
-      d != null ? DateTime.now().difference(d).inDays : -1;
+  static String _metaLine(String type, DateTime? start, DateTime? end, DateTime now) {
+    final category = habitTypeLabel(type);
+    if (end != null && end.isBefore(now)) {
+      final ago = now.difference(end).inDays;
+      return '$category · ended ${_durationLabel(ago)} ago';
+    }
+    if (end != null) {
+      final left = end.difference(now).inDays;
+      return left == 0
+          ? '$category · ends today'
+          : '$category · ends in ${_durationLabel(left)}';
+    }
+    if (start != null) {
+      final since = now.difference(start).inDays;
+      return since == 0
+          ? '$category · started today'
+          : '$category · started ${_durationLabel(since)} ago';
+    }
+    return category;
+  }
+}
+
+// ── Status chip ──────────────────────────────────────────────
+final class _StatusChip extends StatelessWidget {
+  final bool completed;
+  final bool dueSoon;
+  final int daysLeft;
+
+  const _StatusChip({
+    required this.completed,
+    required this.dueSoon,
+    required this.daysLeft,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = _typeColor(param.type);
-    final icon = _typeIcon(param.type);
-    final daysLeft = _days(param.endDate);
-    final sinceStart = _since(param.startDate);
-    final valueText = param.value == param.value.truncateToDouble()
-        ? param.value.toInt().toString()
-        : param.value.toString();
-    final isUrgent = daysLeft >= 0 && daysLeft <= 3;
+    final palette = context.habitizer;
+    final scheme = Theme.of(context).colorScheme;
 
-    final card = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: isUrgent
-                  ? const Border(
-                      left: BorderSide(color: Color(0xFFE8445A), width: 4),
-                    )
-                  : null,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
-              child: Row(
-                children: [
-                  // Leading type icon
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: color.withAlpha(26),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: color, size: 24),
-                  ),
-                  const SizedBox(width: 14),
+    final (Color color, String label) = switch ((
+      completed,
+      dueSoon,
+      daysLeft,
+    )) {
+      (true, _, _) => (palette.success, 'Completed'),
+      (false, true, _) => (
+          palette.danger,
+          daysLeft == 0 ? 'Ends today' : '${daysLeft}d left'
+        ),
+      (false, false, >= 1) => (palette.mutedText, 'Active'),
+      _ => (scheme.primary, 'Active'),
+    };
 
-                  // Title
-                  Expanded(
-                    child: Text(
-                      param.description,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A2E),
-                        height: 1.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
 
-                  // Date-based values (stacked, icons aligned)
-                  if (sinceStart >= 0 || daysLeft >= 0) ...[
-                    const SizedBox(width: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (sinceStart >= 0)
-                          _DateLine(
-                            icon: Icons.play_arrow,
-                            label: _durationLabel(sinceStart),
-                            color: Colors.grey.shade500,
-                          ),
-                        if (daysLeft >= 0)
-                          _DateLine(
-                            icon: Icons.flag,
-                            label: daysLeft == 0 ? 'today' : _durationLabel(daysLeft),
-                            color: daysLeft <= 7
-                                ? const Color(0xFFE8445A)
-                                : Colors.grey.shade500,
-                          ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(width: 8),
+// ── Action row item ──────────────────────────────────────────
+final class _ActionItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
 
-                  // Trailing value
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        valueText,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0058A3),
-                          height: 1.2,
-                        ),
-                      ),
-                      Text(
-                        param.unit,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 4),
+  const _ActionItem({required this.icon, required this.label, this.onTap});
 
-                  // Right chevron
-                  Icon(Icons.chevron_right,
-                      size: 22, color: Colors.grey.shade400),
-                ],
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.habitizer;
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 19, color: palette.mutedText),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: palette.mutedText,
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
-
-    if (onDelete != null) {
-      return Dismissible(
-        key: Key(param.id),
-        direction: DismissDirection.endToStart,
-        confirmDismiss: (direction) async {
-          return await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Delete habit?'),
-                  content: Text('Remove "${param.description}"?'),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel')),
-                    TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Delete',
-                            style: TextStyle(color: Color(0xFFE8445A)))),
-                  ],
-                ),
-              ) ??
-              false;
-        },
-        background: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 24),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8445A),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
-        ),
-        onDismissed: (_) => onDelete!(),
-        child: card,
-      );
-    }
-    return card;
   }
-}
-
-class _DateLine extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _DateLine({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 12,
-            child: Icon(icon, size: 10, color: color),
-          ),
-          const SizedBox(width: 1),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: color,
-              height: 1.2,
-            ),
-          ),
-        ],
-      );
 }
