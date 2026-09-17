@@ -101,7 +101,7 @@ final class ProfilePage extends ConsumerWidget {
               _SettingsRow(
                 icon: Icons.info_outline,
                 label: 'Version',
-                trailing: _ValueText('1.0.5'),
+                trailing: _ValueText('1.1.0'),
               ),
               const _HairlineDivider(),
               _SettingsRow(
@@ -124,7 +124,7 @@ final class ProfilePage extends ConsumerWidget {
                 onTap: () => showAboutDialog(
                   context: context,
                   applicationName: 'Habitizer',
-                  applicationVersion: '1.0.5',
+                  applicationVersion: '1.1.0',
                   applicationIcon:
                       const Icon(Icons.self_improvement, size: 44),
                   children: const [
@@ -140,7 +140,7 @@ final class ProfilePage extends ConsumerWidget {
         const SizedBox(height: 20),
         Center(
           child: Text(
-            'Habitizer 1.0.5 · Made with Flutter',
+            'Habitizer 1.1.0 · Made with Flutter',
             style: TextStyle(fontSize: 11.5, color: palette.mutedText),
           ),
         ),
